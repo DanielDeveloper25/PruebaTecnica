@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Net;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SistemaGestion_API.Datos;
 using SistemaGestion_API.Models;
 using SistemaGestion_API.Models.Dtos;
+using SistemaGestion_API.Repositorio.Interfaces;
 
 namespace SistemaGestion_API.Controllers
 {
@@ -11,124 +15,173 @@ namespace SistemaGestion_API.Controllers
 	public class ProyectoController : ControllerBase
 	{
 		public readonly ILogger<ProyectoController> _logger;
-		public readonly ApplicationDbContext _context;
-		public ProyectoController(ILogger<ProyectoController> logger, ApplicationDbContext context)
+		public readonly IProyectoRepositorio _proyectoRepo;
+		public readonly IMapper _mapper;
+		protected APIResponse _response;
+		public ProyectoController(ILogger<ProyectoController> logger, IProyectoRepositorio proyectoRepositorio, IMapper mapper)
 		{
 			_logger = logger;
-			_context = context;
+			_proyectoRepo = proyectoRepositorio;
+			_mapper = mapper;
+			_response = new();
 		}
 
 		[HttpGet]
-		public ActionResult<IEnumerable<ProyectoDto>> GetProyectos()
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		public async Task<ActionResult<APIResponse>> GetProyectos()
 		{
-			_logger.LogInformation("Obtener los proyectos");
-			return Ok(_context.Proyectos.ToList());
+			try
+			{
+				_logger.LogInformation("Obtener los proyectos");
+
+				IEnumerable<Proyecto> proyectos = await _proyectoRepo.ObtenerTodos();
+
+				_response.Resultado = _mapper.Map<IEnumerable<ProyectoDto>>(proyectos);
+				_response.StatusCode = HttpStatusCode.OK;
+
+				return Ok(_response);
+			}
+			catch (Exception ex)
+			{
+				_response.IsExitoso = false;
+				_response.ErrorMessages = new List<string>() { ex.ToString() };
+			}
+			return _response;
 		}
 
 		[HttpGet("id:int", Name = "GetProyecto")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public ActionResult<ProyectoDto> GetProyecto(int id)
+		public async Task<ActionResult<APIResponse>> GetProyecto(int id)
 		{
-			if (id == 0)
+			try
 			{
-				_logger.LogError("Error al obtener la villa con id:" + id);
-				return BadRequest();
-			}
-			var proyecto = _context.Proyectos.FirstOrDefault(p => p.Id == id);
+				if (id == 0)
+				{
+					_logger.LogError("Error al obtener la villa con id:" + id);
+					_response.StatusCode = HttpStatusCode.BadRequest;
+					_response.IsExitoso = false;
+					return BadRequest(_response);
+				}
+				var proyecto = await _proyectoRepo.Obtener(p => p.Id == id);
 
-			if (proyecto == null)
-			{
-				return NotFound();
+				if (proyecto == null)
+				{
+					_response.StatusCode = HttpStatusCode.NotFound;
+					_response.IsExitoso = false;
+					return NotFound(_response);
+				}
+
+				_response.Resultado = _mapper.Map<ProyectoDto>(proyecto);
+				_response.StatusCode = HttpStatusCode.OK;
+
+				return Ok(_response);
 			}
-			return Ok(proyecto);
+			catch (Exception ex)
+			{
+				_response.IsExitoso = false;
+				_response.ErrorMessages = new List<string>() { ex.ToString() };
+			}
+			return _response;
 		}
 
 		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public ActionResult<ProyectoDto> CrearProyecto([FromBody] ProyectoDto proyectoDto)
+		public async Task<ActionResult<APIResponse>> CrearProyecto([FromBody] ProyectoCreateDto createDto)
 		{
-			if (!ModelState.IsValid)
+			try
 			{
-				return BadRequest(ModelState);
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(ModelState);
+				}
+
+				if (await _proyectoRepo.Obtener(p => p.Nombre.ToLower() == createDto.Nombre.ToLower()) != null)
+				{
+					ModelState.AddModelError("ProyectoExistente", "Ya existe un proyecto con este nombre");
+					return BadRequest(ModelState);
+				}
+
+				if (createDto == null)
+				{
+					return BadRequest(createDto);
+				}
+
+				Proyecto proyecto = _mapper.Map<Proyecto>(createDto);
+
+				proyecto.FechaCreacion = DateTime.Now;
+				proyecto.FechaActualizacion = DateTime.Now;
+				await _proyectoRepo.crear(proyecto);
+
+				_response.Resultado = proyecto;
+				_response.StatusCode = HttpStatusCode.Created;
+
+				return CreatedAtRoute("GetProyecto", new { id = proyecto.Id }, _response);
 			}
-
-			if (_context.Proyectos.FirstOrDefault(p => p.Nombre.ToLower() == proyectoDto.Nombre.ToLower()) != null)
+			catch (Exception ex)
 			{
-				ModelState.AddModelError("ProyectoExistente", "Ya existe un proyecto con este nombre");
-				return BadRequest(ModelState);
+				_response.IsExitoso = false;
+				_response.ErrorMessages = new List<string>() { ex.ToString() };
 			}
-
-			if (proyectoDto == null)
-			{
-				return BadRequest(proyectoDto);
-			}
-
-			if (proyectoDto.Id > 0)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError);
-			}
-
-			Proyecto proyecto = new()
-			{
-				Nombre = proyectoDto.Nombre,
-				Descripcion = proyectoDto.Descripcion,
-				ImagenUrl = proyectoDto.ImagenUrl
-			};
-			_context.Proyectos.Add(proyecto);
-			_context.SaveChanges();
-
-			return CreatedAtRoute("GetProyecto", new { id = proyectoDto.Id }, proyectoDto);
+			return _response;
 		}
 
 		[HttpDelete("{id:int}")]
 		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public IActionResult DeleteProyecto(int id)
+		public async Task<IActionResult> DeleteProyecto(int id)
 		{
-			if (id == 0)
+			try
 			{
-				return BadRequest();
+				if (id == 0)
+				{
+					_response.StatusCode = HttpStatusCode.BadRequest;
+					return BadRequest(_response);
+				}
+
+				var proyecto = await _proyectoRepo.Obtener(p => p.Id == id);
+
+				if (proyecto == null)
+				{
+					_response.StatusCode = HttpStatusCode.NotFound;
+					return NotFound(_response);
+				}
+				await _proyectoRepo.Remover(proyecto);
+				_response.StatusCode = HttpStatusCode.NoContent;
+
+				return Ok(_response);
 			}
-
-			var proyecto = _context.Proyectos.FirstOrDefault(p => p.Id == id);
-
-			if (proyecto == null)
+			catch (Exception ex)  
 			{
-				return NotFound();
+				_response.IsExitoso = false;
+				_response.ErrorMessages = new List<string>() { ex.ToString() };
 			}
-			_context.Proyectos.Remove(proyecto);
-			_context.SaveChanges();
-
-			return NoContent();
+			return BadRequest(_response);
 		}
 
 		[HttpPost("{id:int}")]
 		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public IActionResult UpdateVilla(int id, [FromBody] ProyectoDto proyectoDto)
+		public async Task<IActionResult> UpdateProyecto(int id, [FromBody] ProyectoUpdateDto UpdateDto)
 		{
-			if (proyectoDto == null || id != proyectoDto.Id)
+			if (UpdateDto == null || id != UpdateDto.Id)
 			{
-				return BadRequest();
+				_response.IsExitoso = false;
+				_response.StatusCode = HttpStatusCode.BadRequest;
+				return BadRequest(_response);
 			}
 
-			Proyecto proyecto = new()
-			{
-				Id = proyectoDto.Id,
-				Nombre = proyectoDto.Nombre,
-				Descripcion = proyectoDto.Descripcion,
-				ImagenUrl = proyectoDto.ImagenUrl
-			};
+			Proyecto proyecto = _mapper.Map<Proyecto>(UpdateDto);
 
-			_context.Proyectos.Update(proyecto);
-			_context.SaveChanges();
+			await _proyectoRepo.Actualizar(proyecto);
 
-			return NoContent();
+			_response.StatusCode = HttpStatusCode.NoContent;
+
+			return Ok(_response);
 		}
 	}
 }

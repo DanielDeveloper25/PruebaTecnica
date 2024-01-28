@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "FsTkKxGCI/L9PX8RUU7Vcor1KA1lNBe5sYn9A4u66uxu8X3kdqJDj6NEgXHueaB3/y6Ldiw0Gel8xLoWCc6tjw==",
+  "dgSpecHash": "caVxGaJwnQFMuqW+exNUOQgIdV95hCxE9izOvdVE1ZHZOjPnbUBWf91BDfEMpcPHs01QDLyiD85ajyMUsgZ6bQ==",
   "success": true,
   "projectFilePath": "C:\\Users\\fdani\\OneDrive\\Projects\\SistemaGestion\\SistemaGestion_API\\SistemaGestion_API.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\fdani\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
+    "C:\\Users\\fdani\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
     "C:\\Users\\fdani\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\fdani\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",
     "C:\\Users\\fdani\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

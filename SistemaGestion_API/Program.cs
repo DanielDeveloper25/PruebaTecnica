@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using SistemaGestion_API;
 using SistemaGestion_API.Datos;
+using SistemaGestion_API.Repositorio;
+using SistemaGestion_API.Repositorio.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(option =>
 {
 	option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.AddAutoMapper(typeof(MappingConfig));
+builder.Services.AddScoped<IProyectoRepositorio, ProyectoRepositorio>();
 
 var app = builder.Build();
 
