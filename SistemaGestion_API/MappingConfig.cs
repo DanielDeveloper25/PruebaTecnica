@@ -11,6 +11,14 @@ namespace SistemaGestion_API
 			CreateMap<Proyecto, ProyectoDto>().ReverseMap();
 			CreateMap<Proyecto, ProyectoCreateDto>().ReverseMap();
 			CreateMap<Proyecto, ProyectoUpdateDto>().ReverseMap();
+
+			CreateMap<Usuario, UsuarioDto>().ReverseMap();
+			CreateMap<Usuario, UsuarioCreateDto>().ReverseMap();
+			CreateMap<Usuario, UsuarioUpdateDto>().ReverseMap();
+
+			CreateMap<Asignaciones, AsignacionesDto>().ReverseMap();
+			CreateMap<Asignaciones, AsignacionesCreateDto>().ReverseMap();
+			CreateMap<Asignaciones, AsignacionesUpdateDto>().ReverseMap();
 		}
 	}
 }

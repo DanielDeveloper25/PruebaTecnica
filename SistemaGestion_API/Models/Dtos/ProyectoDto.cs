@@ -10,6 +10,7 @@ namespace SistemaGestion_API.Models.Dtos
 		[MaxLength(50)]
 		public string Nombre { get; set; }
 		public string Descripcion { get; set; }
-		public string ImagenUrl { get; set; }
-	}
+        public DateTime FechaCreacion { get; set; }
+        public DateTime FechaActualizacion { get; set; }
+    }
 }

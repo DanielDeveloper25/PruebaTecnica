@@ -12,31 +12,36 @@ namespace SistemaGestion_API.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ProyectoController : ControllerBase
+	public class AsignacionesController : ControllerBase
 	{
-		public readonly ILogger<ProyectoController> _logger;
+		public readonly ILogger<AsignacionesController> _logger;
+		public readonly IAsignacionesRepositorio _asignacionesRepo;
 		public readonly IProyectoRepositorio _proyectoRepo;
+		public readonly IUsuarioRepositorio _usuarioRepo;
 		public readonly IMapper _mapper;
 		protected APIResponse _response;
-		public ProyectoController(ILogger<ProyectoController> logger, IProyectoRepositorio proyectoRepositorio, IMapper mapper)
+		public AsignacionesController(ILogger<AsignacionesController> logger, IAsignacionesRepositorio asignacionesRepositorio, 
+			IProyectoRepositorio proyectoRepo, IUsuarioRepositorio usuarioRepo, IMapper mapper)
 		{
 			_logger = logger;
-			_proyectoRepo = proyectoRepositorio;
+			_asignacionesRepo = asignacionesRepositorio;
+			_proyectoRepo = proyectoRepo;
+			_usuarioRepo = usuarioRepo;
 			_mapper = mapper;
 			_response = new();
 		}
 
-		[HttpGet("GetProyectos")]
+		[HttpGet("GetAsignaciones")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
-		public async Task<ActionResult<APIResponse>> GetProyectos()
+		public async Task<ActionResult<APIResponse>> GetAsignaciones()
 		{
 			try
 			{
-				_logger.LogInformation("Obtener los proyectos");
+				_logger.LogInformation("Obtener las asignaciones");
 
-				IEnumerable<Proyecto> proyectos = await _proyectoRepo.ObtenerTodos();
+				IEnumerable<Asignaciones> asignacion = await _asignacionesRepo.ObtenerTodos();
 
-				_response.Resultado = _mapper.Map<IEnumerable<ProyectoDto>>(proyectos);
+				_response.Resultado = _mapper.Map<IEnumerable<AsignacionesDto>>(asignacion);
 				_response.StatusCode = HttpStatusCode.OK;
 
 				return Ok(_response);
@@ -49,31 +54,31 @@ namespace SistemaGestion_API.Controllers
 			return _response;
 		}
 
-		[HttpGet(Name = "GetProyecto")]
+		[HttpGet(Name = "GetAsignacion")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<ActionResult<APIResponse>> GetProyecto(int id)
+		public async Task<ActionResult<APIResponse>> GetAsignacion(int id)
 		{
 			try
 			{
 				if (id == 0)
 				{
-					_logger.LogError("Error al obtener el proyecto con id:" + id);
+					_logger.LogError("Error al obtener la asignacion con id:" + id);
 					_response.StatusCode = HttpStatusCode.BadRequest;
 					_response.IsExitoso = false;
 					return BadRequest(_response);
 				}
-				var proyecto = await _proyectoRepo.Obtener(p => p.Id == id);
+				var asignacion = await _asignacionesRepo.Obtener(a => a.Id == id);
 
-				if (proyecto == null)
+				if (asignacion == null)
 				{
 					_response.StatusCode = HttpStatusCode.NotFound;
 					_response.IsExitoso = false;
 					return NotFound(_response);
 				}
 
-				_response.Resultado = _mapper.Map<ProyectoDto>(proyecto);
+				_response.Resultado = _mapper.Map<AsignacionesDto>(asignacion);
 				_response.StatusCode = HttpStatusCode.OK;
 
 				return Ok(_response);
@@ -86,11 +91,10 @@ namespace SistemaGestion_API.Controllers
 			return _response;
 		}
 
-		[HttpPost("CrearProyecto")]
+		[HttpPost("CrearAsignacion")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public async Task<ActionResult<APIResponse>> CrearProyecto([FromBody] ProyectoCreateDto createDto)
+		public async Task<ActionResult<APIResponse>> CrearAsignacion([FromBody] AsignacionesCreateDto createDto)
 		{
 			try
 			{
@@ -99,28 +103,28 @@ namespace SistemaGestion_API.Controllers
 					return BadRequest(ModelState);
 				}
 
-				if (await _proyectoRepo.Obtener(p => p.Nombre.ToLower() == createDto.Nombre.ToLower()) != null)
-				{
-					ModelState.AddModelError("ProyectoExistente", "Ya existe un proyecto con este nombre");
-					return BadRequest(ModelState);
-				}
-
 				if (createDto == null)
 				{
 					return BadRequest(createDto);
 				}
 
-				Proyecto proyecto = _mapper.Map<Proyecto>(createDto);
+				if(await _proyectoRepo.Obtener(p => p.Id == createDto.ProyectoId) == null ||
+					_usuarioRepo.Obtener(u => u.Id == createDto.UsuarioId) == null)
+				{
+					ModelState.AddModelError("ClaveForanea", "No se encontraron los id insertados");
+					return BadRequest(ModelState);
+				}
 
-				proyecto.FechaCreacion = DateTime.Now;
-				proyecto.FechaActualizacion = DateTime.Now;
+				Asignaciones asignacion = _mapper.Map<Asignaciones>(createDto);
 
-				await _proyectoRepo.crear(proyecto);
+				asignacion.FechaCreacion = DateTime.Now;
+				asignacion.FechaActualizacion = DateTime.Now;
+				await _asignacionesRepo.crear(asignacion);
 
-				_response.Resultado = proyecto;
+				_response.Resultado = asignacion;
 				_response.StatusCode = HttpStatusCode.Created;
 
-				return CreatedAtRoute("GetProyecto", new { id = proyecto.Id }, _response);
+				return CreatedAtRoute("GetAsignacion", new { id = asignacion.Id }, _response);
 			}
 			catch (Exception ex)
 			{
@@ -130,11 +134,11 @@ namespace SistemaGestion_API.Controllers
 			return _response;
 		}
 
-		[HttpDelete("DeleteProyecto")]
+		[HttpDelete("DeleteAsignacion")]
 		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<IActionResult> DeleteProyecto(int id)
+		public async Task<IActionResult> DeleteAsignacion(int id)
 		{
 			try
 			{
@@ -144,14 +148,15 @@ namespace SistemaGestion_API.Controllers
 					return BadRequest(_response);
 				}
 
-				var proyecto = await _proyectoRepo.Obtener(p => p.Id == id);
+				var asignacion = await _asignacionesRepo.Obtener(a => a.Id == id);
 
-				if (proyecto == null)
+				if (asignacion == null)
 				{
+					_response.IsExitoso=false;
 					_response.StatusCode = HttpStatusCode.NotFound;
 					return NotFound(_response);
 				}
-				await _proyectoRepo.Remover(proyecto);
+				await _asignacionesRepo.Remover(asignacion);
 				_response.StatusCode = HttpStatusCode.NoContent;
 
 				return Ok(_response);
@@ -164,10 +169,10 @@ namespace SistemaGestion_API.Controllers
 			return BadRequest(_response);
 		}
 
-		[HttpPost("UpdateProyecto")]
+		[HttpPost("UpdateAsignacion")]
 		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public async Task<IActionResult> UpdateProyecto(int id, [FromBody] ProyectoUpdateDto UpdateDto)
+		public async Task<IActionResult> UpdateProyecto(int id, [FromBody] AsignacionesUpdateDto UpdateDto)
 		{
 			if (UpdateDto == null || id != UpdateDto.Id)
 			{
@@ -176,40 +181,13 @@ namespace SistemaGestion_API.Controllers
 				return BadRequest(_response);
 			}
 
-			Proyecto proyecto = _mapper.Map<Proyecto>(UpdateDto);
+			Asignaciones asignacion = _mapper.Map<Asignaciones>(UpdateDto);
 
-			await _proyectoRepo.Actualizar(proyecto);
+			await _asignacionesRepo.Actualizar(asignacion);
 
 			_response.StatusCode = HttpStatusCode.NoContent;
 
 			return Ok(_response);
-		}
-
-		[HttpGet("{proyectoId}/usuarios")]
-		[ProducesResponseType(StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<ActionResult> GetUsuariosPorProyectoId(int proyectoId)
-		{
-			if (proyectoId == 0)
-			{
-				_logger.LogError("Error al obtener el usuario con id:" + proyectoId);
-				_response.StatusCode = HttpStatusCode.BadRequest;
-				_response.IsExitoso = false;
-				return BadRequest(_response);
-			}
-			var proyecto = await _proyectoRepo.Obtener(u => u.Id == proyectoId);
-
-			if (proyecto == null)
-			{
-				_response.StatusCode = HttpStatusCode.NotFound;
-				_response.IsExitoso = false;
-				return NotFound(_response);
-			}
-
-			var usuarios = await _proyectoRepo.GetUsuariosPorProyectoId(proyectoId);
-
-			return Ok(usuarios);
 		}
 	}
 }

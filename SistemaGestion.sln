@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaGestion_API", "SistemaGestion_API\SistemaGestion_API.csproj", "{1E081B12-C755-4095-91F5-40CBB3F62009}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SistemaGestion_API", "SistemaGestion_API\SistemaGestion_API.csproj", "{1E081B12-C755-4095-91F5-40CBB3F62009}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaGestion_MVC", "SistemaGestion_MVC\SistemaGestion_MVC.csproj", "{D9244535-1930-4E34-837C-831EF3CC8189}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{1E081B12-C755-4095-91F5-40CBB3F62009}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E081B12-C755-4095-91F5-40CBB3F62009}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E081B12-C755-4095-91F5-40CBB3F62009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9244535-1930-4E34-837C-831EF3CC8189}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9244535-1930-4E34-837C-831EF3CC8189}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9244535-1930-4E34-837C-831EF3CC8189}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9244535-1930-4E34-837C-831EF3CC8189}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

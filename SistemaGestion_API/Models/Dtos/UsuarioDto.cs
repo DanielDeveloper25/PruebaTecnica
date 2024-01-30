@@ -4,7 +4,6 @@ namespace SistemaGestion_API.Models.Dtos
 {
 	public class UsuarioDto
 	{
-		[Key]
 		public int Id { get; set; }
 
 		[Required]
@@ -12,6 +11,5 @@ namespace SistemaGestion_API.Models.Dtos
 
 		[Required]
 		public string Email { get; set; }
-		public string ImagenUrl { get; set; }
 	}
 }

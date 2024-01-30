@@ -8,9 +8,9 @@ namespace SistemaGestion_API.Models
 		[Key]
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int Id { get; set; }
+		[Required]
 		public string Nombre { get; set; }
 		public string Descripcion { get; set; }
-        public string ImagenUrl { get; set; }
         public DateTime FechaCreacion { get; set; }
 		public DateTime FechaActualizacion { get; set; }
 

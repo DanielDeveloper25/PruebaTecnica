@@ -12,31 +12,31 @@ namespace SistemaGestion_API.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ProyectoController : ControllerBase
+	public class UsuarioController : ControllerBase
 	{
-		public readonly ILogger<ProyectoController> _logger;
-		public readonly IProyectoRepositorio _proyectoRepo;
+		public readonly ILogger<UsuarioController> _logger;
+		public readonly IUsuarioRepositorio _usuarioRepo;
 		public readonly IMapper _mapper;
 		protected APIResponse _response;
-		public ProyectoController(ILogger<ProyectoController> logger, IProyectoRepositorio proyectoRepositorio, IMapper mapper)
+		public UsuarioController(ILogger<UsuarioController> logger, IUsuarioRepositorio usuarioRepositorio, IMapper mapper)
 		{
 			_logger = logger;
-			_proyectoRepo = proyectoRepositorio;
+			_usuarioRepo = usuarioRepositorio;
 			_mapper = mapper;
 			_response = new();
 		}
 
-		[HttpGet("GetProyectos")]
+		[HttpGet("GetUsuarios")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
-		public async Task<ActionResult<APIResponse>> GetProyectos()
+		public async Task<ActionResult<APIResponse>> GetUsuarios()
 		{
 			try
 			{
-				_logger.LogInformation("Obtener los proyectos");
+				_logger.LogInformation("Obtener los usuarios");
 
-				IEnumerable<Proyecto> proyectos = await _proyectoRepo.ObtenerTodos();
+				IEnumerable<Usuario> usuarios = await _usuarioRepo.ObtenerTodos();
 
-				_response.Resultado = _mapper.Map<IEnumerable<ProyectoDto>>(proyectos);
+				_response.Resultado = _mapper.Map<IEnumerable<UsuarioDto>>(usuarios);
 				_response.StatusCode = HttpStatusCode.OK;
 
 				return Ok(_response);
@@ -49,31 +49,31 @@ namespace SistemaGestion_API.Controllers
 			return _response;
 		}
 
-		[HttpGet(Name = "GetProyecto")]
+		[HttpGet(Name = "GetUsuario")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<ActionResult<APIResponse>> GetProyecto(int id)
+		public async Task<ActionResult<APIResponse>> GetUsuario(int id)
 		{
 			try
 			{
 				if (id == 0)
 				{
-					_logger.LogError("Error al obtener el proyecto con id:" + id);
+					_logger.LogError("Error al obtener el usuario con id:" + id);
 					_response.StatusCode = HttpStatusCode.BadRequest;
 					_response.IsExitoso = false;
 					return BadRequest(_response);
 				}
-				var proyecto = await _proyectoRepo.Obtener(p => p.Id == id);
+				var usuario = await _usuarioRepo.Obtener(u => u.Id == id);
 
-				if (proyecto == null)
+				if (usuario == null)
 				{
 					_response.StatusCode = HttpStatusCode.NotFound;
 					_response.IsExitoso = false;
 					return NotFound(_response);
 				}
 
-				_response.Resultado = _mapper.Map<ProyectoDto>(proyecto);
+				_response.Resultado = _mapper.Map<UsuarioDto>(usuario);
 				_response.StatusCode = HttpStatusCode.OK;
 
 				return Ok(_response);
@@ -86,11 +86,11 @@ namespace SistemaGestion_API.Controllers
 			return _response;
 		}
 
-		[HttpPost("CrearProyecto")]
+		[HttpPost("CrearUsuario")]
 		[ProducesResponseType(StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public async Task<ActionResult<APIResponse>> CrearProyecto([FromBody] ProyectoCreateDto createDto)
+		public async Task<ActionResult<APIResponse>> CrearUsuario([FromBody] UsuarioCreateDto createDto)
 		{
 			try
 			{
@@ -99,9 +99,9 @@ namespace SistemaGestion_API.Controllers
 					return BadRequest(ModelState);
 				}
 
-				if (await _proyectoRepo.Obtener(p => p.Nombre.ToLower() == createDto.Nombre.ToLower()) != null)
+				if (await _usuarioRepo.Obtener(u => u.Email == createDto.Email) != null)
 				{
-					ModelState.AddModelError("ProyectoExistente", "Ya existe un proyecto con este nombre");
+					ModelState.AddModelError("UsuarioExistente", "Ya existe un usuario con este correo");
 					return BadRequest(ModelState);
 				}
 
@@ -110,17 +110,16 @@ namespace SistemaGestion_API.Controllers
 					return BadRequest(createDto);
 				}
 
-				Proyecto proyecto = _mapper.Map<Proyecto>(createDto);
+				Usuario usuario = _mapper.Map<Usuario>(createDto);
 
-				proyecto.FechaCreacion = DateTime.Now;
-				proyecto.FechaActualizacion = DateTime.Now;
+				usuario.FechaCreacion = DateTime.Now;
+				usuario.FechaActualizacion = DateTime.Now;
+				await _usuarioRepo.crear(usuario);
 
-				await _proyectoRepo.crear(proyecto);
-
-				_response.Resultado = proyecto;
+				_response.Resultado = usuario;
 				_response.StatusCode = HttpStatusCode.Created;
 
-				return CreatedAtRoute("GetProyecto", new { id = proyecto.Id }, _response);
+				return CreatedAtRoute("GetUsuario", new { id = usuario.Id }, _response);
 			}
 			catch (Exception ex)
 			{
@@ -130,11 +129,11 @@ namespace SistemaGestion_API.Controllers
 			return _response;
 		}
 
-		[HttpDelete("DeleteProyecto")]
+		[HttpDelete("DeleteUsuario")]
 		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<IActionResult> DeleteProyecto(int id)
+		public async Task<IActionResult> DeleteUsuario(int id)
 		{
 			try
 			{
@@ -144,14 +143,14 @@ namespace SistemaGestion_API.Controllers
 					return BadRequest(_response);
 				}
 
-				var proyecto = await _proyectoRepo.Obtener(p => p.Id == id);
+				var usuario = await _usuarioRepo.Obtener(u => u.Id == id);
 
-				if (proyecto == null)
+				if (usuario == null)
 				{
 					_response.StatusCode = HttpStatusCode.NotFound;
 					return NotFound(_response);
 				}
-				await _proyectoRepo.Remover(proyecto);
+				await _usuarioRepo.Remover(usuario);
 				_response.StatusCode = HttpStatusCode.NoContent;
 
 				return Ok(_response);
@@ -164,10 +163,10 @@ namespace SistemaGestion_API.Controllers
 			return BadRequest(_response);
 		}
 
-		[HttpPost("UpdateProyecto")]
+		[HttpPost("UpdateUsuario")]
 		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		public async Task<IActionResult> UpdateProyecto(int id, [FromBody] ProyectoUpdateDto UpdateDto)
+		public async Task<IActionResult> UpdateUsuario(int id, [FromBody] UsuarioUpdateDto UpdateDto)
 		{
 			if (UpdateDto == null || id != UpdateDto.Id)
 			{
@@ -176,40 +175,40 @@ namespace SistemaGestion_API.Controllers
 				return BadRequest(_response);
 			}
 
-			Proyecto proyecto = _mapper.Map<Proyecto>(UpdateDto);
+			Usuario usuario = _mapper.Map<Usuario>(UpdateDto);
 
-			await _proyectoRepo.Actualizar(proyecto);
+			await _usuarioRepo.Actualizar(usuario);
 
 			_response.StatusCode = HttpStatusCode.NoContent;
 
 			return Ok(_response);
 		}
 
-		[HttpGet("{proyectoId}/usuarios")]
+		[HttpGet("{usuarioId}/proyectos")]
 		[ProducesResponseType(StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		public async Task<ActionResult> GetUsuariosPorProyectoId(int proyectoId)
+		public async Task<ActionResult> GetProyectosPorUsuarioId(int usuarioId)
 		{
-			if (proyectoId == 0)
+			if (usuarioId == 0)
 			{
-				_logger.LogError("Error al obtener el usuario con id:" + proyectoId);
+				_logger.LogError("Error al obtener el usuario con id:" + usuarioId);
 				_response.StatusCode = HttpStatusCode.BadRequest;
 				_response.IsExitoso = false;
 				return BadRequest(_response);
 			}
-			var proyecto = await _proyectoRepo.Obtener(u => u.Id == proyectoId);
+			var usuario = await _usuarioRepo.Obtener(u => u.Id == usuarioId);
 
-			if (proyecto == null)
+			if (usuario == null)
 			{
 				_response.StatusCode = HttpStatusCode.NotFound;
 				_response.IsExitoso = false;
 				return NotFound(_response);
 			}
 
-			var usuarios = await _proyectoRepo.GetUsuariosPorProyectoId(proyectoId);
+			var proyectos = await _usuarioRepo.GetProyectosPorUsuarioId(usuarioId);
 
-			return Ok(usuarios);
+			return Ok(proyectos);
 		}
 	}
 }

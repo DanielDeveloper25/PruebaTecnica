@@ -2,15 +2,13 @@
 
 namespace SistemaGestion_API.Models.Dtos
 {
-	public class ProyectoUpdateDto
+	public class AsignacionesUpdateDto
 	{
-		[Required]
 		public int Id { get; set; }
 
 		[Required]
-		[MaxLength(50)]
-		public string Nombre { get; set; }
+		public int UsuarioId { get; set; }
 		[Required]
-		public string Descripcion { get; set; }
+		public int ProyectoId { get; set; }
 	}
 }

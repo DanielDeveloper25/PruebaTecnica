@@ -2,12 +2,13 @@
 
 namespace SistemaGestion_API.Models.Dtos
 {
-	public class ProyectoCreateDto
+	public class UsuarioCreateDto
 	{
 
 		[Required]
-		[MaxLength(50)]
 		public string Nombre { get; set; }
-		public string Descripcion { get; set; }
+
+		[Required]
+		public string Email { get; set; }
 	}
 }

@@ -18,6 +18,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(option =>
 });
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddScoped<IProyectoRepositorio, ProyectoRepositorio>();
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IAsignacionesRepositorio, AsignacionesRepositorio>();
 
 var app = builder.Build();
 
@@ -27,6 +29,7 @@ if (app.Environment.IsDevelopment())
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
+app.UseCors(a => a.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
 app.UseHttpsRedirection();
 
